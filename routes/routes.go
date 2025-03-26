@@ -26,21 +26,22 @@ func SetupRoutes(app *utils.App)  *mux.Router{
 
 	//middleware chain for user routes
 	userChain := alice.New(middleware.AuthMiddleware(app), middleware.LoggingMiddleware)
-	// router.Handle("/inventory-items", userChain.ThenFunc(handlers.GetAllItems)).Methods("GET")
 	
+	//middleware chain for admin routes
+	adminChain := userChain.Append(middleware.AdminMiddleware)
 
 	// Authentication routes
 	router.Handle("/auth/register", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Register)).Methods("POST")
 	router.Handle("/auth/login", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Login)).Methods("POST")
 
-	//Inventory Items routes
-	router.Handle("/inventory-items", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.GetAllItems)).Methods("GET")
-	router.Handle("/inventory-items/{id}", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.GetItem)).Methods("GET")
+	//Inventory Items routes only token
+	router.Handle("/inventory-items", userChain.ThenFunc(handlers.GetAllItems)).Methods("GET")
+	router.Handle("/inventory-items/{id}", userChain.ThenFunc(handlers.GetItem)).Methods("GET")
 
-	//Inventory routes with authmiddleware
-	router.Handle("/inventory-items", userChain.ThenFunc(handlers.CreateItem)).Methods("POST")
-	router.Handle("/inventory-items", userChain.ThenFunc(handlers.UpdateItem)).Methods("PUT")
-	router.Handle("/inventory-items", userChain.ThenFunc(handlers.DeleteItem)).Methods("DELETE")
+	//Inventory routes that require admin access
+	router.Handle("/inventory-items", adminChain.ThenFunc(handlers.CreateItem)).Methods("POST")
+	router.Handle("/inventory-items", adminChain.ThenFunc(handlers.UpdateItem)).Methods("PUT")
+	router.Handle("/inventory-items", adminChain.ThenFunc(handlers.DeleteItem)).Methods("DELETE")
 
 	return router
 }

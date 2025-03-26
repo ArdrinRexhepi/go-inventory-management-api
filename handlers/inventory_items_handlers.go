@@ -49,7 +49,6 @@ func GetAllItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer rows.Close()
-
 	var items []models.InventoryItem
 	for rows.Next() {
 		var item models.InventoryItem
@@ -117,6 +116,6 @@ func DeleteItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Item deleted successfully"})
 }

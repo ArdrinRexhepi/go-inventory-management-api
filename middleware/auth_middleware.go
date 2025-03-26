@@ -10,10 +10,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// type App struct{
-// 	// DB *sql.DB
-// 	JWTKey []byte
-// }
 
 func AuthMiddleware(app *utils.App) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
