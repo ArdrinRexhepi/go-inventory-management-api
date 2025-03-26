@@ -43,5 +43,9 @@ func SetupRoutes(app *utils.App)  *mux.Router{
 	router.Handle("/inventory-items", adminChain.ThenFunc(handlers.UpdateItem)).Methods("PUT")
 	router.Handle("/inventory-items", adminChain.ThenFunc(handlers.DeleteItem)).Methods("DELETE")
 
+	//restock routes
+	router.Handle("/restock", adminChain.ThenFunc(handlers.RestockItem)).Methods("POST")
+	router.Handle("/restock/{id}", adminChain.ThenFunc(handlers.GetRestockHistory)).Methods("GET")
+
 	return router
 }

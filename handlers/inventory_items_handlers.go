@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"go-inventory-management-api/database"
 	"go-inventory-management-api/models"
-	"go-inventory-management-api/utils"
 	"log"
 	"net/http"
 
@@ -17,14 +16,6 @@ func CreateItem(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&item)
 	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
-	}
-
-	claims:= r.Context().Value("claims").(*utils.Claims)
-	isAdmin := claims.IsAdmin
-
-	if(!isAdmin){
-		http.Error(w, "Not authorized to create", http.StatusUnauthorized)
 		return
 	}
 
@@ -119,3 +110,5 @@ func DeleteItem(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Item deleted successfully"})
 }
+
+//optional filter to highlight low-stock items
