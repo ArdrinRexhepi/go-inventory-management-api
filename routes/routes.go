@@ -16,6 +16,10 @@ func SetupRoutes() *mux.Router{
 		log.Println(w, "Inventory Management API is running!")
 	}).Methods("GET")
 
+	// Authentication routes
+	router.Handle("/auth", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Register)).Methods("POST")
+
+	//Inventory Items routes
 	router.Handle("/inventory-items", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.CreateItem)).Methods("POST")
 	router.Handle("/inventory-items", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.GetAllItems)).Methods("GET")
 	router.Handle("/inventory-items/{id}", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.GetItem)).Methods("GET")
