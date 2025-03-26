@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -139,4 +140,39 @@ func Login(w http.ResponseWriter, r *http.Request){
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(UserResponse{UserID: userID, Username: credentials.Username, Token: tokenString})
+}
+
+//function to turn a user into an admin
+func MakeNewAdmin(w http.ResponseWriter, r *http.Request){
+	vars := mux.Vars(r)
+	userID := vars["id"]
+
+	var userExists bool
+	err:= database.DB.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE id=$1)`, userID).Scan(&userExists)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+	if !userExists {
+		respondWithError(w, http.StatusNotFound, "User not found")
+		return
+	}
+	var isAdmin bool
+	err = database.DB.QueryRow(`SELECT is_admin FROM users WHERE id = $1`, userID).Scan(&isAdmin)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to check user admin status")
+		return
+	}
+	if isAdmin {
+		respondWithError(w, http.StatusConflict, "User is already an admin")
+    return
+	}
+
+	_, err = database.DB.Exec(`UPDATE users SET is_admin=true where id=$1`,userID)
+	if err != nil{
+		respondWithError(w, http.StatusInternalServerError, "Failed to make user admin")
+    return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
