@@ -21,9 +21,10 @@ type Claims struct{
 // 	JWTKey []byte
 // }
 
-func  JwtMiddleware(app *utils.App, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-		log.Println(w, "Middleware: JWT validation")
+func JwtMiddleware(app *utils.App) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+      log.Println(w, "Middleware: JWT validation")
 		authHeader  := r.Header.Get("Authorization")
 		log.Println(w, authHeader)
 
@@ -54,11 +55,12 @@ func  JwtMiddleware(app *utils.App, next http.Handler) http.Handler {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
         return
 		}
-		log.Println(w, "1111111")
+		log.Println(w, "88888888888")
 
 		ctx:=context.WithValue(r.Context(), "claims", claims)
 
     log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
     next.ServeHTTP(w, r.WithContext(ctx))
-  })
+    })
+  }
 }
