@@ -1,8 +1,8 @@
 package main
 
 import (
-	"go-inventory-management-api/config"
-	"go-inventory-management-api/database"
+	"go-inventory-management-api/internal/config"
+	"go-inventory-management-api/internal/database"
 	"go-inventory-management-api/routes"
 	"go-inventory-management-api/utils"
 	"log"

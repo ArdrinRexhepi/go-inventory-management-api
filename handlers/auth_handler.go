@@ -3,8 +3,8 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"go-inventory-management-api/config"
-	"go-inventory-management-api/database"
+	"go-inventory-management-api/internal/config"
+	"go-inventory-management-api/internal/database"
 	"go-inventory-management-api/utils"
 	"log"
 	"net/http"
@@ -26,13 +26,6 @@ type UserResponse struct {
 }
 type ErrorResponse struct {
 	Message string `json:"message"`
-}
-
-
-func respondWithError(w http.ResponseWriter, code int, message string){
-	w.Header().Set("Content-Type", "application/json")
-  w.WriteHeader(code)
-  json.NewEncoder(w).Encode(ErrorResponse{Message:message})
 }
 
 func generateToken(username string, userID string, isAdmin bool)(string,error){
@@ -67,16 +60,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	var credentials Credentials
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err !=nil{
-		// w.Header().Set("Content-Type", "application/json")
-		// w.WriteHeader(http.StatusBadRequest)
-		// json.NewEncoder(w).Encode(ErrorResponse{Message:"Invalid credentials"})
-		respondWithError(w, http.StatusBadRequest, "Invalid credentials")
+		http.Error(w, "Invalid credentials", http.StatusBadRequest)
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(credentials.Password), bcrypt.DefaultCost)
 	if err !=nil{
-		respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	var userID string
@@ -84,17 +74,16 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	VALUES ($1, $2, false, NOW(), NOW()) RETURNING id`
 	err = database.DB.QueryRow(query, credentials.Username, string(hashedPassword)).Scan(&userID)
 	if err !=nil{
-    respondWithError(w, http.StatusInternalServerError, "Error creating user")
+		http.Error(w, "Error creating user", http.StatusInternalServerError)
     return
   }
-
-
-
-
-
+	tokenString, err := generateToken(credentials.Username, userID, false)
+	if err != nil{
+		http.Error(w, "Error generating token", http.StatusInternalServerError)
+    return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	// w.WriteHeader(http.StatusBadRequest)
-	json.NewEncoder(w).Encode(UserResponse{UserID:userID, Username: credentials.Username})
+	json.NewEncoder(w).Encode(UserResponse{UserID: userID, Username: credentials.Username, Token: tokenString})
 	
 }
 
@@ -103,15 +92,9 @@ func Login(w http.ResponseWriter, r *http.Request){
 	var credentials Credentials
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err !=nil{
-		// w.Header().Set("Content-Type", "application/json")
-		// w.WriteHeader(http.StatusBadRequest)
-		// json.NewEncoder(w).Encode(ErrorResponse{Message:"Invalid credentials"})
-		respondWithError(w, http.StatusBadRequest, "Invalid credentials")
+		http.Error(w, "Invalid credentials", http.StatusBadRequest)
 		return
 	}
-
-	log.Println("HEREERERERE")
-
 	var storedCredentials Credentials
 	var userID string
 	var isAdmin bool
@@ -120,22 +103,22 @@ func Login(w http.ResponseWriter, r *http.Request){
 	
 	if err != nil{
 		if err == sql.ErrNoRows{
-			respondWithError(w, http.StatusUnauthorized, "Invalid username or password")
+			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		}
-		respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		http.Error(w, "Failed to parse items", http.StatusInternalServerError)
 		return
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedCredentials.Password), []byte(credentials.Password))
 	if err != nil{
-		respondWithError(w, http.StatusUnauthorized, "Invalid username or password")
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
     return
 	}
 
 	tokenString, err := generateToken(credentials.Username, userID, isAdmin)
 	if err != nil{
-		respondWithError(w, http.StatusInternalServerError, "Error generating token")
+		http.Error(w, "Error generating token", http.StatusInternalServerError)
     return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -150,27 +133,27 @@ func MakeNewAdmin(w http.ResponseWriter, r *http.Request){
 	var userExists bool
 	err:= database.DB.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE id=$1)`, userID).Scan(&userExists)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	if !userExists {
-		respondWithError(w, http.StatusNotFound, "User not found")
+		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 	var isAdmin bool
 	err = database.DB.QueryRow(`SELECT is_admin FROM users WHERE id = $1`, userID).Scan(&isAdmin)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to check user admin status")
+		http.Error(w, "Failed to check user admin status", http.StatusInternalServerError)
 		return
 	}
 	if isAdmin {
-		respondWithError(w, http.StatusConflict, "User is already an admin")
+		http.Error(w, "User is already an admin", http.StatusConflict)
     return
 	}
 
 	_, err = database.DB.Exec(`UPDATE users SET is_admin=true where id=$1`,userID)
 	if err != nil{
-		respondWithError(w, http.StatusInternalServerError, "Failed to make user admin")
+		http.Error(w, "Failed to make user admin", http.StatusInternalServerError)
     return
 	}
 

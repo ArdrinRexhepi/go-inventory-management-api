@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"go-inventory-management-api/database"
+	"go-inventory-management-api/internal/database"
 	"go-inventory-management-api/models"
 	"log"
 	"net/http"

@@ -1,11 +1,11 @@
 package routes
 
 import (
-	"go-inventory-management-api/handlers"
-	"go-inventory-management-api/middleware"
 	"log"
 	"net/http"
 
+	"go-inventory-management-api/handlers"
+	"go-inventory-management-api/internal/middleware"
 	"go-inventory-management-api/utils"
 
 	"github.com/gorilla/mux"
