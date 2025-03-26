@@ -50,7 +50,7 @@ func GetAllItems(w http.ResponseWriter, r *http.Request) {
 		}
 		items = append(items, item)
 	}
-
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(items)
 }
 
@@ -111,4 +111,31 @@ func DeleteItem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Item deleted successfully"})
 }
 
-//optional filter to highlight low-stock items
+//filter to highlight low-stock items
+func GetLowStockItems(w http.ResponseWriter, r *http.Request) {
+	rows, err := database.DB.Query(`SELECT * FROM inventory_items WHERE quantity <=20`)
+	if err !=nil{
+		http.Error(w, "Failed to retrieve low stock items", http.StatusInternalServerError)
+    return
+	}
+	defer rows.Close()
+
+	var items []models.InventoryItem
+
+	for rows.Next(){
+		var item models.InventoryItem
+    err := rows.Scan(&item.ID, &item.Name, &item.Description, &item.Quantity, &item.CreatedAt, &item.UpdatedAt)
+    if err != nil{
+      http.Error(w, "Failed to parse items", http.StatusInternalServerError)
+      return
+    }
+    items = append(items, item)
+	}
+	// Check for any row iteration errors
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Error while fetching data", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(items)
+}

@@ -33,10 +33,12 @@ func SetupRoutes(app *utils.App)  *mux.Router{
 	// Authentication routes
 	router.Handle("/auth/register", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Register)).Methods("POST")
 	router.Handle("/auth/login", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Login)).Methods("POST")
+	//With admin requirement
 	router.Handle("/auth/make_admin/{id}", adminChain.ThenFunc(handlers.MakeNewAdmin)).Methods("PATCH")
 
 	//Inventory Items routes only token
 	router.Handle("/inventory-items", userChain.ThenFunc(handlers.GetAllItems)).Methods("GET")
+	router.Handle("/inventory-items/low-stock", userChain.ThenFunc(handlers.GetLowStockItems)).Methods("GET")
 	router.Handle("/inventory-items/{id}", userChain.ThenFunc(handlers.GetItem)).Methods("GET")
 
 	//Inventory routes that require admin access
