@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	_ "github.com/lib/pq"
 
@@ -14,35 +13,37 @@ import (
 
 var DB *sql.DB
 
-func ConnectDb(connStr string) {
+func ConnectDb(connStr string) error {
 	var err error
 	DB, err = sql.Open("postgres", connStr)  // Use global DB variable
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		return fmt.Errorf("failed to initialize database: %v", err)
 	}
 
 	if err = DB.Ping(); err != nil {
-		log.Fatalf("PING ERROR: %v", err)
+		return fmt.Errorf("ping error: %v", err)
 	}
 
 	fmt.Println("Successfully connected to database")
 	runMigrations(DB)
+	return nil
 }
 
-func runMigrations(db *sql.DB) {
+func runMigrations(db *sql.DB) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		log.Fatalf("Migration driver error: %v", err)
+		return fmt.Errorf("migration driver error: %v", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
 	if err != nil {
-		log.Fatalf("Migration error: %v", err)
+		return fmt.Errorf("migration error: %v", err)
 	}
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		log.Fatalf("Migration execution error: %v", err)
+		return fmt.Errorf("migration execution error: %v", err)
 	}
 
 	fmt.Println("Database migrations applied successfully")
+	return nil
 }

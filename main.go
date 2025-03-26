@@ -13,7 +13,10 @@ func main() {
 	if err != nil {
     log.Fatalf("Failed to load config: %v", err)
   }
-	database.ConnectDb(cfg.DatabaseURL)
+	if err := database.ConnectDb(cfg.DatabaseURL); err != nil {
+		log.Fatalf("Error initializing the database: %v", err)
+		return
+	}
 
 	router := routes.SetupRoutes()
 
