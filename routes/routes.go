@@ -17,7 +17,8 @@ func SetupRoutes() *mux.Router{
 	}).Methods("GET")
 
 	// Authentication routes
-	router.Handle("/auth", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Register)).Methods("POST")
+	router.Handle("/auth/register", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Register)).Methods("POST")
+	router.Handle("/auth/login", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Login)).Methods("POST")
 
 	//Inventory Items routes
 	router.Handle("/inventory-items", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.CreateItem)).Methods("POST")

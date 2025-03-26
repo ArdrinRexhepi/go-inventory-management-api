@@ -9,7 +9,7 @@ import (
 type Config struct {
 	DatabaseURL string
 	ServerPort  string
-	JwtSecret  string
+	JwtSecret  []byte
 }
 
 func LoadConfig() (*Config, error) {
@@ -19,7 +19,7 @@ func LoadConfig() (*Config, error) {
 	}
 	return &Config{
 		DatabaseURL: os.Getenv("DATABASE_URL"),
-		JwtSecret: os.Getenv("JWT_SECRET"),
+		JwtSecret:   []byte(os.Getenv("JWT_SECRET")),
 		ServerPort:  getEnv("SERVER_PORT", "5000"),
 	}, nil
 }
