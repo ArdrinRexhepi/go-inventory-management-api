@@ -9,5 +9,4 @@ type InventoryItem struct {
 	Quantity    int       `json:"quantity"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-	LastRestock *time.Time `json:"last_restock,omitempty"`
 }

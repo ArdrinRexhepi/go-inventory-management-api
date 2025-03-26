@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"go-inventory-management-api/database"
 	"go-inventory-management-api/models"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -18,11 +19,12 @@ func CreateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `INSERT INTO inventory_items (name, description, quantity, created_at, updated_at, last_restock) 
-			  VALUES ($1, $2, $3, NOW(), NOW(), NOW()) RETURNING id`
+	query := `INSERT INTO inventory_items (name, description, quantity, created_at, updated_at) 
+			  VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`
 
 	err = database.DB.QueryRow(query, item.Name, item.Description, item.Quantity).Scan(&item.ID)
 	if err != nil {
+		log.Printf("Failed to create inventory item: %v", err)
 		http.Error(w, "Failed to create item", http.StatusInternalServerError)
 		return
 	}
@@ -32,7 +34,7 @@ func CreateItem(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllItems(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query("SELECT id, name, description, quantity, created_at, updated_at, last_restock FROM inventory_items")
+	rows, err := database.DB.Query("SELECT id, name, description, quantity, created_at, updated_at FROM inventory_items")
 	if err != nil {
 		http.Error(w, "Failed to retrieve items", http.StatusInternalServerError)
 		return
@@ -42,7 +44,7 @@ func GetAllItems(w http.ResponseWriter, r *http.Request) {
 	var items []models.InventoryItem
 	for rows.Next() {
 		var item models.InventoryItem
-		err := rows.Scan(&item.ID, &item.Name, &item.Description, &item.Quantity, &item.CreatedAt, &item.UpdatedAt, &item.LastRestock)
+		err := rows.Scan(&item.ID, &item.Name, &item.Description, &item.Quantity, &item.CreatedAt, &item.UpdatedAt)
 		if err != nil {
 			http.Error(w, "Failed to parse items", http.StatusInternalServerError)
 			return
@@ -58,8 +60,8 @@ func GetItem(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 
 	var item models.InventoryItem
-	err := database.DB.QueryRow("SELECT id, name, description, quantity, created_at, updated_at, last_restock FROM inventory_items WHERE id = $1", id).
-		Scan(&item.ID, &item.Name, &item.Description, &item.Quantity, &item.CreatedAt, &item.UpdatedAt, &item.LastRestock)
+	err := database.DB.QueryRow("SELECT id, name, description, quantity, created_at, updated_at FROM inventory_items WHERE id = $1", id).
+		Scan(&item.ID, &item.Name, &item.Description, &item.Quantity, &item.CreatedAt, &item.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
