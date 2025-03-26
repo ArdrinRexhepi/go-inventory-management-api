@@ -4,9 +4,12 @@ import (
 	"go-inventory-management-api/config"
 	"go-inventory-management-api/database"
 	"go-inventory-management-api/routes"
+	"go-inventory-management-api/utils"
 	"log"
 	"net/http"
 )
+
+
 
 func main() {
 	cfg, err := config.LoadConfig()
@@ -17,9 +20,12 @@ func main() {
 		log.Fatalf("Error initializing the database: %v", err)
 		return
 	}
+	defer database.DB.Close()
 
-	router := routes.SetupRoutes()
+	app:=&utils.App{JWTKey:cfg.JwtSecret}
 
-	log.Println("Listening on port", cfg.ServerPort)
-	log.Fatal(http.ListenAndServe(":"+cfg.ServerPort, router))
+	router := routes.SetupRoutes(app)
+
+	log.Println("Listening on port 5000")
+	log.Fatal(http.ListenAndServe(":5000", router))
 }
