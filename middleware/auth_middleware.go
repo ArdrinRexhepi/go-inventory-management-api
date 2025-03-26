@@ -10,18 +10,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type Claims struct{
-	Username string `json:"username"`
-	UserID string `json:"id"`
-	jwt.RegisteredClaims
-}
-
 // type App struct{
 // 	// DB *sql.DB
 // 	JWTKey []byte
 // }
 
-func JwtMiddleware(app *utils.App) func(http.Handler) http.Handler {
+func AuthMiddleware(app *utils.App) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader  := r.Header.Get("Authorization")
@@ -32,7 +26,7 @@ func JwtMiddleware(app *utils.App) func(http.Handler) http.Handler {
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		claims := &Claims{
+		claims := &utils.Claims{
 
 		}
 		token, err :=jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token)(interface{}, error){

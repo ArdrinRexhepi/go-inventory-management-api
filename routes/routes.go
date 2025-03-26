@@ -25,7 +25,7 @@ func SetupRoutes(app *utils.App)  *mux.Router{
 
 
 	//middleware chain for user routes
-	userChain := alice.New(middleware.JwtMiddleware(app), middleware.LoggingMiddleware)
+	userChain := alice.New(middleware.AuthMiddleware(app), middleware.LoggingMiddleware)
 	// router.Handle("/inventory-items", userChain.ThenFunc(handlers.GetAllItems)).Methods("GET")
 	
 

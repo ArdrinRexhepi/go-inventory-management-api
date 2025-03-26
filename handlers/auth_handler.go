@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"go-inventory-management-api/config"
 	"go-inventory-management-api/database"
+	"go-inventory-management-api/utils"
 	"log"
 	"net/http"
 	"time"
@@ -26,11 +27,6 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-type Claims struct{
-	Username string `json:"username"`
-	UserID string `json:"id"`
-	jwt.RegisteredClaims
-}
 
 func respondWithError(w http.ResponseWriter, code int, message string){
 	w.Header().Set("Content-Type", "application/json")
@@ -38,12 +34,13 @@ func respondWithError(w http.ResponseWriter, code int, message string){
   json.NewEncoder(w).Encode(ErrorResponse{Message:message})
 }
 
-func generateToken(username, userID string)(string,error){
+func generateToken(username string, userID string, isAdmin bool)(string,error){
 	expirationTime := time.Now().Add(1*time.Hour)
 
-	claims := &Claims{
+	claims := &utils.Claims{
 		Username: username,
 		UserID: userID,
+		IsAdmin: isAdmin,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 
@@ -112,10 +109,13 @@ func Login(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
+	log.Println("HEREERERERE")
+
 	var storedCredentials Credentials
 	var userID string
-	err = database.DB.QueryRow(`SELECT id, username, password FROM "users" WHERE username=$1`, 
-				credentials.Username).Scan(&userID, &storedCredentials.Username, &storedCredentials.Password)
+	var isAdmin bool
+	err = database.DB.QueryRow(`SELECT id, username, is_admin, password FROM "users" WHERE username=$1`, 
+				credentials.Username).Scan(&userID, &storedCredentials.Username, &isAdmin, &storedCredentials.Password)
 	
 	if err != nil{
 		if err == sql.ErrNoRows{
@@ -132,7 +132,7 @@ func Login(w http.ResponseWriter, r *http.Request){
     return
 	}
 
-	tokenString, err := generateToken(credentials.Username, userID)
+	tokenString, err := generateToken(credentials.Username, userID, isAdmin)
 	if err != nil{
 		respondWithError(w, http.StatusInternalServerError, "Error generating token")
     return
