@@ -24,22 +24,23 @@ func SetupRoutes(app *utils.App)  *mux.Router{
 	}).Methods("GET")
 
 
+	//middleware chain for user routes
 	userChain := alice.New(middleware.JwtMiddleware(app), middleware.LoggingMiddleware)
+	// router.Handle("/inventory-items", userChain.ThenFunc(handlers.GetAllItems)).Methods("GET")
+	
 
 	// Authentication routes
 	router.Handle("/auth/register", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Register)).Methods("POST")
 	router.Handle("/auth/login", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.Login)).Methods("POST")
 
 	//Inventory Items routes
-	router.Handle("/inventory-items", userChain.ThenFunc(handlers.GetAllItems)).Methods("GET")
-	router.Handle("/inventory-items", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.CreateItem)).Methods("POST")
+	router.Handle("/inventory-items", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.GetAllItems)).Methods("GET")
 	router.Handle("/inventory-items/{id}", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.GetItem)).Methods("GET")
-	router.Handle("/inventory-items/{id}", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.UpdateItem)).Methods("PUT")
-	router.Handle("/inventory-items/{id}", alice.New(middleware.LoggingMiddleware).ThenFunc(handlers.DeleteItem)).Methods("DELETE")
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println(w, "Inventory Management API is running!")
-	})
+	//Inventory routes with authmiddleware
+	router.Handle("/inventory-items", userChain.ThenFunc(handlers.CreateItem)).Methods("POST")
+	router.Handle("/inventory-items", userChain.ThenFunc(handlers.UpdateItem)).Methods("PUT")
+	router.Handle("/inventory-items", userChain.ThenFunc(handlers.DeleteItem)).Methods("DELETE")
 
 	return router
 }
